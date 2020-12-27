@@ -1,34 +1,23 @@
-%%  return U = PM^-1 * V, where PM is the preconditioner for Schur matrix
+%%	return U = P^-1 * V for given V, where P is the preconditioner for Schur matrix S (temp version, for test)
 %%
 %%  Input:
-%%  Output:
+%%          MWW:            matrix block for wirebasket * wirebasket
+%%          MWE:            matrix block for wirebasket * edge
+%%          MEE:            matrix block for edge * edge
+%%          V:              vector
+%%  Output: U:              P^-1 * V, P is the preconditioner for Schur matrix S
 
-function U = Preconditioner(debInd, dewbInd, MS, MW, MB, MSB, MWB, MWWB, numDecompose, V)
-
-%%
-l = size(V, 1);
-U = zeros(l, 1);
-
-%%
-% if sum(MW) ~= 0
-%     w = 1 / (numDecompose + 1);
-% else
-%     w = 1/ numDecompose;
-% end
-w = 1;
+function U = Preconditioner(MWW, MWE, MEE_W, LW, LE, V)
 
 %%
-for i = 1:numDecompose
-    Utemp = zeros(l, 1);
-    Utemp(debInd{i}) = (MB{i} - MSB{i}' * (MS{i} \ MSB{i})) \ V(debInd{i});
-    U = U + w * w * Utemp;
-end
-
-%%
-if sum(MW) ~= 0
-    Utemp = zeros(l, 1);
-    Utemp(dewbInd) = (MWB - MWWB' * (MW \ MWWB)) \ V(dewbInd);
-    U = U + w * w * Utemp;
-end
+nw = size(MWW, 1);
+nb = size(MEE_W, 1);
+ze = zeros(nw, 1);
+U = [MWW MWE LW;MWE' MEE_W LE;LW' LE' 0] \ [ze;V;0];
+U = U(nw + 1:nw + nb);
+%
+% U = V;
+%
+% U = (MEE_W - MWE' * (MWW \ MWE)) \ V;
 
 end

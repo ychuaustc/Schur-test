@@ -1,0 +1,41 @@
+%%  return a decomposition of given mesh
+%%
+%%  Input:
+%%  Output:
+
+function [DV, DS, DE, DW, DWB, numDecompose] = DecomposeTest(nV)
+
+%%
+sqnV = sqrt(nV);
+%
+dwInd = 3:sqnV:nV - sqnV + 3;
+dwbInd1 = 2:sqnV:nV - sqnV + 2;
+dwbInd2 = 4:sqnV:nV - sqnV + 4;
+dsInd1 = 1:sqnV:nV - sqnV + 1;
+dsInd2 = setdiff(1:nV, dwInd);
+dsInd2 = setdiff(dsInd2, dwbInd1);
+dsInd2 = setdiff(dsInd2, dwbInd2);
+dsInd2 = setdiff(dsInd2, dsInd1);
+%
+DW = zeros(nV, 1);
+DV{1} = zeros(nV, 1);
+DV{2} = zeros(nV, 1);
+DS{1} = zeros(nV, 1);
+DS{2} = zeros(nV, 1);
+DWB = zeros(nV, 1);
+DE = zeros(nV, 1);
+%
+DW(dwInd) = 1;
+DWB(dwbInd1) = 1;
+DWB(dwbInd2) = 1;
+DE = DWB;
+DS{1}(dsInd1) = 1;
+DS{2}(dsInd2) = 1;
+DV{1} = DS{1};
+DV{1}(dwbInd1) = 1;
+DV{2} = DS{2};
+DV{2}(dwbInd1) = 1;
+numDecompose = 1;
+
+%%
+end

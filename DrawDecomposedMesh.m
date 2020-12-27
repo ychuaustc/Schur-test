@@ -1,10 +1,11 @@
 %%  draw mesh
-%%  Input:  Vertex: vertice matrix (sparse matrix, vertice size * 3)
-%%          Face: face matrix (sparse matrix, face size * 3)
-%%          DV: list of vertice in the decomposition (tuple of sparse nV * 1 matrix)
-%%          nV: mesh size (const)
-%%          numDecompose: number of decomposition (constant)
-%%  Output: //
+%%  Input:
+%%          Vertex:         vertice matrix
+%%          Face:           face matrix
+%%          DV:             list of vertice in the decomposition
+%%          nV:             mesh size
+%%          numDecompose:	number of decomposition
+%%  Output: 
 
 function [] = DrawDecomposedMesh(Vertex, Face, DV, nV, numDecompose)
     
@@ -17,7 +18,9 @@ plot([0, 0], [0, 1], 'k');hold on; plot([1, 1], [0, 1], 'k');hold on;
 axis off; axis equal; title('Decomposed mesh');
 
 %%
+Z = zeros(nV, 1);
 for i = 1:numDecompose
+% for i = 1:numDecompose + 1
     facecolor = rand(1, 3);
     tempVertice = find(ones(nV, 1) - DV{i})';
     tempFace = Face;
@@ -26,9 +29,10 @@ for i = 1:numDecompose
             tempFace(find(tempFace(:, k) == tempVertice(j))', :) = [];
         end
     end
-    
-    trimesh(tempFace, Vertex(:, 1), Vertex(:, 2), Vertex(:, 3), 'facecolor', facecolor);
+    %
+    trimesh(tempFace, Vertex(:, 1), Vertex(:, 2), Z, 'facecolor', facecolor);
     hold on;
 end
 
+%%
 end

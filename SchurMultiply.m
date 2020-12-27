@@ -1,23 +1,22 @@
-%%  return U = Schur matrix * V
+%%  return U = Schur matrix S * V
 %%
-%%  Input:  MS
-%%          MSE
-%%          MW
-%%          MWE
-%%          ME
-%%          V
-%%          numDecompose: number of decomposition (constant)
-%%  Output: U: Schur matrix * V (column vector)
+%%  Input:
+%%          MSS:            matrix block for subdomain * subdomain (tuple)
+%%          MSE:            matrix block for subdomain * edge (tuple)
+%%          MWW:            matrix block for wirebasket * wirebasket
+%%          MWE:            matrix block for wirebasket * edge
+%%          MEE:            matrix block for edge * edge
+%%          V:              mutiplier vector
+%%          numDecompose:	number of decomposition
+%%  Output: U:              Schur matrix S * V
 
-function U = SchurMultiply(MS, MSE, MW, MWE, ME, V, numDecompose)
+function U = SchurMultiply(MSS, MSE, MWW, MWE, MEE, V, numDecompose)
 
 %%
-U = ME * V;
+U = MEE * V;
 for i = 1:numDecompose
-    U = U - MSE{i}' * (MS{i} \ (MSE{i} * V));
+    U = U - MSE{i}' * (MSS{i} \ (MSE{i} * V));
 end
-if sum(MW) ~= 0
-    U = U - MWE' * (MW \ (MWE * V));
-end
+U = U - MWE' * (MWW \ (MWE * V));
 
 end
