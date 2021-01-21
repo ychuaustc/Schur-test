@@ -127,13 +127,15 @@ while 1
 end
 
 %   display the result
-iterSchur = 0;
-for i = 1:iterARAP
-    iterSchur = iterSchur + iter_X{i} + iter_Y{i};
+if solverType == 2 || solverType == 3
+    iterSchur = 0;
+    for i = 1:iterARAP
+        iterSchur = iterSchur + iter_X{i} + iter_Y{i};
+    end
+    iterSchur = floor(iterSchur / (iterARAP * 2));
+    fprintf('local-global iteration steps: %d \n', iterARAP);
+    fprintf('PCG iteration steps (in each global phase): %d \n', iterSchur);
 end
-iterSchur = floor(iterSchur / (iterARAP * 2));
-fprintf('local-global iteration steps: %d \n', iterARAP);
-fprintf('PCG iteration steps (in each global phase): %d \n', iterSchur);
 VertexU = full(VertexU);
 DrawMesh(VertexU, Face, nV);
 
