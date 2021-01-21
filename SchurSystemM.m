@@ -1,45 +1,46 @@
-%%	construct sparse system MX = C with given decomposition
-%%
-%%	Input:
-%%          M:              M matrix
-%%          DS:             list of subdomain in the decomposition
-%%          DB:             list of boundary in the decomposition
-%%          DE:             edges in the decomposition
-%%          DW:             wirebasket in the decomposition
-%%          DWB:            boundary of wirebasket in the decomposition           
-%%          numDecompose:   number of decompositions
-%%	Output:
-%%          MSS:            matrix block for subdomain * subdomain
-%%          MSE:            matrix block for subdomain * edge (tuple)
-%%          MWW:            matrix block for wirebasket * wirebasket
-%%          MWE:            matrix block for wirebasket * edge
-%%          MEE:            matrix block for edge * edge
-%%          dsInd:          index for subdomain
-%%          dwInd:          index for wirebasket
-%%          deInd:          index for edge
+function [MSS, MSE, MWW, MWE, MEE, dsInd, dwInd, deInd] = SchurSystemM(M, DS, DE, DW, numDecompose, fixedP)
+%
+%   this function computes the index and matrix blocks for the Schur system upon a given
+%   decomposition
+%
+%   INPUT:  M - the coefficient matrix
+%           DS - subdomain list
+%           DS - subdomain list
+%           DW - wirebasket set
+%           numDecompose - decomposition number
+%           fixedP - fixed points
+%
+%   OUTPUT: MSS - the subdomain matrix for the Schur system
+%           MSE - the subdomain-edge matrix for the Schur system
+%           MWW - the wirebasket matrix for the Schur system
+%           MWE - the wirebasket-edge matrix for the Schur system
+%           MEE - the edge matrix for the Schur system
+%           dsInd - the index for the subdomains
+%           dwInd - the index for the wirebasket
+%           deInd - the index for the edge
 
-function [MSS, MSE, MWW, MWE, MEE, dsInd, dwInd, deInd] = SchurSystemM(M, DS, DE, DW, numDecompose)
 
-%% compute decomposition index
-%  subdomain
+DS{1}(fixedP) = 0;	% remove the fixed points from the subdomains
+
+
+%   the index in the decomposition
 for i = 1:numDecompose
-    dsInd{i} = find(DS{i}); % subdomain index
+    dsInd{i} = find(DS{i});	% the index for the subdomains
 end
-%  wirebasket
-dwInd = find(DW); % wirebasket index
-%  edge
-deInd = find(DE); % edge index
+dwInd = find(DW);	% the index for the wirebasket
+deInd = find(DE);	% the index for the edge
 
-%%  define matrix blocks for M
-for i = 1:numDecompose
-    MSS{i} = M(dsInd{i}, dsInd{i}); % matrix block for subdomain * subdomain
-end
-for i = 1:numDecompose
-    MSE{i} = M(dsInd{i}, deInd); % matrix block for subdomain * edge
-end
-MWW = M(dwInd, dwInd); % matrix block for wirebasket * wirebasket
-MWE = M(dwInd, deInd); % matrix block for wirebasket * edge
-MEE = M(deInd, deInd); % matrix block for edge * edge
 
-%%
+%   compute the matrix blocks
+for i = 1:numDecompose
+    MSS{i} = M(dsInd{i}, dsInd{i});	% the matrix blocks for subdomains
+end
+for i = 1:numDecompose
+    MSE{i} = M(dsInd{i}, deInd);	% matrix block for subdomain-edge
+end
+MWW = M(dwInd, dwInd);	% the matrix block for the wirebasket
+MWE = M(dwInd, deInd);	% the matrix block for wirebasket-edge
+MEE = M(deInd, deInd);	% the matrix block for the edge
+
+
 end

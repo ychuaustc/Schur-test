@@ -1,21 +1,12 @@
-%%  return geometry information of given mesh
-%%
-%%  Input:
-%%          A:
-%%          B:
-%%          C:
-%%          D:
-%%  Output:
-%%          U11:
-%%          U12:
-%%          U21:
-%%          U22:
-%%          V11:
-%%          V12:
-%%          V21:
-%%          V22:
-
 function [U11, U12, U21, U22, V11, V12, V21, V22] = SVD2D(A, B, C, D)
+%
+%   this function computes the SVD of (A B;C D)
+%
+%   INPUT:  
+%
+%   OUTPUT: 
+
+
     E = (A + D) / 2;
     F = (A - D) / 2;
     G = (C + B) / 2;
@@ -35,5 +26,7 @@ function [U11, U12, U21, U22, V11, V12, V21, V22] = SVD2D(A, B, C, D)
     V11 = cos(theta);
     V21 = -sin(theta);
     V12 = sin(theta);
-    V22 = cos(theta);   
+    V22 = cos(theta);
+    
+    
 end
