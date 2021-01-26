@@ -56,6 +56,20 @@ end
 numDecomposeTemp = 2^(2 * m2);
 
 
+energyType = listdlg('PromptString', 'Energy type', 'SelectionMode','single', ...
+                     'liststring', {'ARAP', 'Symmetric Dirichlet', 'SARAP'});
+switch energyType
+    case 1
+        addpath(genpath('arap'));
+    case 2
+        addpath(genpath('symmd'));
+    case 3
+        addpath(genpath('sarap'));
+    otherwise
+        quit(1);
+end
+
+
 switch meshType
     case {1, 2}
         nv = (2^(m1 - m2) + 1)^2;

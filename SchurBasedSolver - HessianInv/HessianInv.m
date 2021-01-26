@@ -3,8 +3,6 @@ clc;
 
 
 addpath(genpath('NewtonParam'));
-addpath(genpath('Hessian'));
-addpath(genpath('H'));
 
 
 [meshType, nV, numDecomposeTemp, nv, wirebasketType, solverType, epsArap, epsSchur, fileName] = SetParameter();
@@ -41,12 +39,8 @@ switch solverType
         quit(1)
 end
 
-if solverType == 2 || solverType == 3
-    fprintf('The iteration time is %d\n', iter);
-end
-
 l2Error = norm(XSol - XU, 2) / nV;
-fprintf('The L2-error of the result compared to the exact value is %d\n', l2Error);
+fprintf('The L2-error is %d\n', l2Error);
 
 
 % profile viewer;

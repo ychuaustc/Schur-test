@@ -1,13 +1,16 @@
-This is a test that check whether the Schur complement method works for the Hessian matrix, it simply computes the Hessian of the ARAP energy, say H, then apply the Schur method to compute H^-1 V for any V in R(H), and see whether the preconditioned can help reduce the iteration time. As shown in the result, the reduction can be 1 / 6 for unstructured mesh. 
+This is a test that checks whether the Schur complement method works for the second order approximation method. 
+For the Hessian matrix H of the energy of the deformation, we simply apply the Schur method to compute H^-1 V 
+for a given V in R(H), and see how much can we reduce the iterations in the Schur complement method with a 
+preconditioner.
 
-run:
+to use this code,
 
--run Parameterization.m
+-run HessianInv.m
 -select the parameters
 -see the results
 
 
-files:
+files included:
 
 -HessianInv.m
 -SetParameter.m
@@ -31,4 +34,7 @@ files:
       -Preconditioner.m
 
 
-This is just a prototype for test and more modification is needed to see how this method works, such as test on other energies, parallelization, and so on.
+This is just a prototype for test and more modification is needed to see how this method works, such as test on more 
+type of energies, parallelization, and so on. For time being, only ARAP, symmetric Dirichlet and SARAP are tested 
+for some meshes. For the tests we've done, the iteration time can be 1 / 6 compared to the un-preconditioned case 
+for most cases.
