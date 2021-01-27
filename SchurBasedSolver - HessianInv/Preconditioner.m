@@ -9,8 +9,13 @@ function U = Preconditioner(MWW, MWE, MEE_W, V)
 %
 %   OUTPUT: U - the preconditioned vector M^(-1)V
 
-
-U = (MEE_W - MWE' * (MWW \ MWE)) \ V;
-
+% tic;
+% U = (MEE_W - MWE' * (MWW \ MWE)) \ V;
+nw = size(MWW, 1);
+nb = size(MEE_W, 1);
+zw = zeros(nw, 1);
+U = [MWW MWE;MWE' MEE_W] \ [zw;V];
+U = U(nw + 1:nw + nb);
+% t = toc;
 
 end
