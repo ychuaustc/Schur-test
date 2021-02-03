@@ -1,0 +1,11 @@
+m = 10;
+n = 2^m;
+a = 1;
+A = rand(n);
+A = A'*A+a*eye(n);
+B = rand(n, 1);
+C = A * B;
+tic;
+D = A \ C;
+% E = inv(A);
+t = toc;

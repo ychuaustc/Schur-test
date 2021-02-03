@@ -2,6 +2,7 @@ clear;
 clc;
 
 
+profile on;
 addpath(genpath('NewtonParam'));
 
 
@@ -20,10 +21,10 @@ M = getM(meshType, nV, fileName);
 MEE_W = getH(meshType, nV, fileName, numDecompose);
 
 
-
 XSol = rand(nV, 1);
 C = M * XSol;
-    
+
+
 switch solverType
     case 1  % direct solver
         [XU, t] = DirectSolver(M, C);
@@ -43,4 +44,4 @@ l2Error = norm(XSol - XU, 2) / nV;
 fprintf('The L2-error is %d\n', l2Error);
 
 
-% profile viewer;
+profile viewer;

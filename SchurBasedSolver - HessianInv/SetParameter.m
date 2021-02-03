@@ -26,7 +26,7 @@ fileName = 0;
 switch meshType
     case {1, 2}
         m1 = listdlg('PromptString', 'Mesh size', 'SelectionMode','single', ...
-                     'liststring', {'289', '1089', '4225'}) + 3;
+                     'liststring', {'289', '1089', '4225', '16641', '66049', '263169'}) + 3;
         nV = (2^m1 + 1)^2;
     case 3
         fileName = listdlg('PromptString', 'Obj file name', ...
@@ -50,24 +50,15 @@ end
 
 if nV <= 4000
 	m2 = listdlg('PromptString', 'Decomposition number', 'SelectionMode','single', 'liststring', {'4'});
-else
+elseif nV <= 20000
     m2 = listdlg('PromptString', 'Decomposition number', 'SelectionMode','single', 'liststring', {'4', '16'});
+else
+    m2 = listdlg('PromptString', 'Decomposition number', 'SelectionMode','single', 'liststring', {'4', '16', '64'});
 end
 numDecomposeTemp = 2^(2 * m2);
 
 
-energyType = listdlg('PromptString', 'Energy type', 'SelectionMode','single', ...
-                     'liststring', {'ARAP', 'Symmetric Dirichlet', 'SARAP'});
-switch energyType
-    case 1
-        addpath(genpath('arap'));
-    case 2
-        addpath(genpath('symmd'));
-    case 3
-        addpath(genpath('sarap'));
-    otherwise
-        quit(1);
-end
+addpath(genpath('arap'));
 
 
 switch meshType

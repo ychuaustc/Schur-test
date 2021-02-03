@@ -14,6 +14,28 @@ switch meshType
                 else
                     M = load('H/s_4225_16');
                 end
+            case 16641
+                if numDecompose < 10
+                    M = load('H/s_16641_4');
+                else
+                    M = load('H/s_16641_16');
+                end
+            case 66049
+                if numDecompose < 10
+                    M = load('H/s_66049_4');
+                elseif numDecompose < 20
+                    M = load('H/s_66049_16');
+                else
+                    M = load('H/s_66049_64');
+                end
+            case 263169
+                if numDecompose < 10
+                    M = load('H/s_263169_4');
+                elseif numDecompose < 20
+                    M = load('H/s_263169_16');
+                else
+                    M = load('H/s_263169_64');
+                end
             otherwise
                 quit(1);
         end
@@ -28,6 +50,28 @@ switch meshType
                     M = load('H/u_4225_4');
                 else
                     M = load('H/u_4225_16');
+                end
+            case 16641
+                if numDecompose < 10
+                    M = load('H/u_16641_4');
+                else
+                    M = load('H/u_16641_16');
+                end
+            case 66049
+                if numDecompose < 10
+                    M = load('H/u_66049_4');
+                elseif numDecompose < 20
+                    M = load('H/u_66049_16');
+                else
+                    M = load('H/u_66049_64');
+                end
+            case 263169
+                if numDecompose < 10
+                    M = load('H/u_263169_4');
+                elseif numDecompose < 20
+                    M = load('H/u_263169_16');
+                else
+                    M = load('H/u_263169_64');
                 end
             otherwise
                 quit(1);

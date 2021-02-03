@@ -10,6 +10,12 @@ switch meshType
                 M = load('M/s_1089');
             case 4225
                 M = load('M/s_4225');
+            case 16641
+                M = load('M/s_16641');
+            case 66049
+                M = load('M/s_66049');
+            case 263169
+                M = load('M/s_263169');
             otherwise
                 quit(1);
         end
@@ -21,6 +27,12 @@ switch meshType
                 M = load('M/u_1089');
             case 4225
                 M = load('M/u_4225');
+            case 16641
+                M = load('M/u_16641');
+            case 66049
+                M = load('M/u_66049');
+            case 263169
+                M = load('M/u_263169');
             otherwise
                 quit(1);
         end
