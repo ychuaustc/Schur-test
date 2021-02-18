@@ -6,17 +6,19 @@ clc;
 
 
 %   profile on;
-addpath(genpath('NewtonParam'));
+PathSet();
 fprintf('Mesh Parameterization Test.\n\n\n');
 
 
 %%  set parameters
-[meshType, nV, numDecomposeTemp, nv, wirebasketType, solverType, epsArap, epsSchur] = SetParameter();
+[meshType, solverType, nV, numDecompose, fileName, epsArap, epsSchur] = SetParameter();
+% meshType = 2;solverType = 2;nV = 289;numDecompose = 4;fileName = 'None';eps = floor(1.5 * log10(1.0 / nV));
+% epsArap = 10^eps;epsSchur = 10^eps;
 
 
 %%  mesh generation
 fprintf('Part I: Mesh generation\n\n');
-[Vertex, Face] = MeshGeneration(meshType, nV);
+[Vertex, Face] = MeshGeneration(meshType, nV, fileName);
 
 
 %%  mesh information
@@ -24,8 +26,9 @@ fprintf('Part I: Mesh generation\n\n');
 
 
 %%	mesh decomposition
-fprintf('Part II: Mesh decomposition\n\n');
-[DV, DS, DB, DE, DW, DWB, numDS, numDecompose] = Decompose(nV, nv, B, MC, wirebasketType, Vertex, Face, nF);
+fprintf('Part II: Mesh decomposition\n\n\n');
+[DS, DE, DW, DWB] = Decomp(MC, Vertex, nV, numDecompose);
+% [DS, DE, DW, DWB, Map, sepEdge, edge, subdomain, w] = Decomp1(MC, Vertex, nV, numDecompose);
 
 
 %%	parameterization pretreatment
@@ -103,6 +106,10 @@ while 1
             CY(vecWOfixedP) = CY(vecWOfixedP) - M(vecWOfixedP, fixedP) * VertexU(fixedP, 2);
             [CSX, CWX, bX] = SchurSystemC(MSS, MSE, MWW, MWE, CX, dsInd, dwInd, deInd, numDecompose);
             [CSY, CWY, bY] = SchurSystemC(MSS, MSE, MWW, MWE, CY, dsInd, dwInd, deInd, numDecompose);
+%             [XUWOF, iter_X{iterARAP}, t_X{iterARAP}] ...
+%             = SchurConjPreSolver(MSS, MSE, MWW, MWE, MEE, MEE, LW, LE, CSX, CWX, bX, dsInd, dwInd, deInd, nV - 1, numDecompose, epsSchur);
+%             [YUWOF, iter_Y{iterARAP}, t_Y{iterARAP}]...
+%             = SchurConjPreSolver(MSS, MSE, MWW, MWE, MEE, MEE, LW, LE, CSY, CWY, bY, dsInd, dwInd, deInd, nV - 1, numDecompose, epsSchur);
             [XUWOF, iter_X{iterARAP}, t_X{iterARAP}] ...
             = SchurConjPreSolver(MSS, MSE, MWW, MWE, MEE, MEE_W, LW, LE, CSX, CWX, bX, dsInd, dwInd, deInd, nV - 1, numDecompose, epsSchur);
             [YUWOF, iter_Y{iterARAP}, t_Y{iterARAP}]...

@@ -1,13 +1,14 @@
-function [Vertex, Face] = MeshGeneration(meshType, nV)
+function [Vertex, Face] = MeshGeneration(meshType, nV, fileName)
 %
 %
-%   this function generates triangulations upon the mesh type and the mesh size
+%   this function generates triangulations upon mesh type and mesh size
 %
-%   INPUT:  Vertex - mesh vertices
-%           Face - mesh faces
-%
-%   OUTPUT: meshType - the type of the triangulation and the manner to get it
+%   INPUT:  meshType - the type of the triangulation and the manner to obtain it
 %           nV - mesh size
+%           fileName - name of obj file
+%
+%   OUTPUT: Vertex - mesh vertices
+%           Face - mesh faces
 
 
 switch meshType
@@ -16,7 +17,16 @@ switch meshType
     case 2
         [Vertex, Face] = GenerateUT(nV);
     case 3
-        [Vertex, Face] = GenerateFromObj('NewtonParam\ball');
+        switch fileName
+            case 1
+                [Vertex, Face] = GenerateFromObj('NewtonParam/ball');
+            case 2
+                [Vertex, Face] = GenerateFromObj('NewtonParam/camelhead_slim');
+            case 3
+                [Vertex, Face] = GenerateFromObj('NewtonParam/face');
+            otherwise
+                quit(1);
+        end
     otherwise
         quit(1);
 end

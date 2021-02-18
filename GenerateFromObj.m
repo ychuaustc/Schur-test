@@ -1,6 +1,6 @@
 function [Vertex, Face] = GenerateFromObj(Filename)
 %
-%   this function read obj file and generate the triangulation by calling the readObj function
+%   this function reads obj file and generate the triangulation by calling the readObj function
 %
 %   INPUT:  Filename - the obj file
 %

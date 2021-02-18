@@ -27,7 +27,7 @@ for i = 1:nY
     Vertex(nX*(i - 1) + 1:nX*i, 1) = x';
     Vertex(nX*(i - 1) + 1:nX*i, 2) = y(i);
 end
-Vertex(:,3) = 0;
+Vertex(:, 3) = 0;
 
 
 nx1 = nX - 1;

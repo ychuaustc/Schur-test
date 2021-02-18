@@ -18,8 +18,8 @@ Face1 = Face(:, 1);
 Face2 = Face(:, 2);
 Face3 = Face(:, 3);
 dwwbInd = find(DW | DWB)';
-notindwwbInd = setdiff(1:nV, dwwbInd);
-for i = notindwwbInd
+notinwwbInd = setdiff(1:nV, dwwbInd);
+for i = notinwwbInd
     fnotinwwb1 = find(Face1 == i)';
     FNotInWWB(fnotinwwb1) = 1;
     fnotinwwb2 = find(Face2 == i)';

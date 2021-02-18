@@ -17,7 +17,14 @@ nb = size(MEE_W, 1);
 ze = zeros(nw, 1);
 U = [MWW MWE LW;MWE' MEE_W LE;LW' LE' 0] \ [ze;V;0];
 U = U(nw + 1:nw + nb);
+
 % U = (MEE_W - MWE' * (MWW \ MWE)) \ V;
+
+% nw = size(MWW, 1);
+% nb = size(MEE_W, 1);
+% zw = zeros(nw, 1);
+% U = [MWW MWE;MWE' MEE_W] \ [zw;V];
+% U = U(nw + 1:nw + nb);
 
 
 end

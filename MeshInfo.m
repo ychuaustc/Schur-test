@@ -3,16 +3,16 @@ function [nF, I, nI, B, nB, MC] = MeshInfo(Vertex, Face, nV)
 %   this function gives the details of the triangulation, such as faces numbers, adjacent matrix and
 %   so on
 %
-%   INPUT:  nF - number of faces
+%   INPUT:  Vertex - mesh vertices
+%           Face - mesh faces
+%           nV - mesh size
+%
+%   OUTPUT: nF - number of faces
 %           I - inner part
 %           nI - number of inner part
 %           B - boundary
 %           nB - number of boundary
 %           MC - adjacent matrix
-%
-%   OUTPUT: Vertex - mesh vertices
-%           Face - mesh faces
-%           nV - mesh size
 
 
 nF = size(Face, 1);

@@ -9,7 +9,8 @@ function [] = DrawMesh(Vertex, Face, nV)
 %   OUTPUT: 
     
 
-figure; set(gcf, 'Units', 'normalized', 'Position', [0.05, 0.05, .8, .8]);
+figure;
+% set(gcf, 'Units', 'normalized', 'Position', [0.05, 0.05, .8, .8]);
 
 
 plot([0, 1], [0, 0], 'k');hold on;plot([0, 1], [1, 1], 'k');hold on;

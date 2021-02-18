@@ -16,6 +16,7 @@ DT = delaunayTriangulation(P);
 
 
 Vertex = DT.Points;
+Vertex(:, 3) = 0;
 Face = DT.ConnectivityList;
 
 

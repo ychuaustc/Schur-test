@@ -71,6 +71,7 @@ switch wirebasketType
             end
             if count >= 3
                 DW(i) = 1;	% get the wirebasket set
+                break;
             end
         end
         dwInd = find(DW)';
