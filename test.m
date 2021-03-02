@@ -1,63 +1,176 @@
-%%	construct sparse system MX = C with given decomposition
-%%
-%%	Input:
-%%          M:              M matrix
-%%          CT:             C vector (tuple)
-%%          DS:             list of subdomain in the decomposition
-%%          DB:             list of boundary in the decomposition
-%%          DE:             edges in the decomposition
-%%          DW:             wirebasket in the decomposition
-%%          DWB:            boundary of wirebasket in the decomposition           
-%%          numDecompose:   number of decompositions
-%%	Output:
-%%          MSS:            matrix block for subdomain * subdomain (tuple)
-%%          MSE:            matrix block for subdomain * edge (tuple)
-%%          MWW:            matrix block for wirebasket * wirebasket
-%%          MWE:            matrix block for wirebasket * edge
-%%          MEE:            matrix block for edge * edge
-%%          CST:            matrix block for subdomain (2d tuple)
-%%          CWT:            matrix block for wirebasket (tuple)
-%%          S:              Schur matrix
-%%          bT:             Schur vector (tuple)
-%%          dsInd:          index for subdomain (tuple)
-%%          dwInd:          index for wirebasket (tuple)
-%%          deInd:          index for edge (tuple)
+testfunc(Vertex, Face);
 
-function [S] = test(M, DS, DB, DE, DW, DWB, numDecompose)
+He = replaceNonzeros(H, Hnonzeros);
+He = (He ~= 0);
+He1 = He(1:nv, 1:nv);
+He2 = He(1:nv, nv + 1:2 * nv);
+He3 = He(nv + 1:2 * nv, 1:nv);
+He4 = He(nv + 1:2 * nv, nv + 1:2 * nv);
 
-%% compute decomposition index
-%  subdomain
-for i = 1:numDecompose
-    dsInd{i} = find(DS{i}); % subdomain index
-end
-%  wirebasket
-dwInd = find(DW); % wirebasket index
-%  edge
-deInd = find(DE); % edge index
-%  boundary
-for i = 1:numDecompose
-    dbInd{i} = find(DB{i}); % boundary index
-end
-dwbInd = find(DWB); % wirebasket boundary index
+imagesc(He);
+imagesc(He1);
+imagesc(He2);
+imagesc(He3);
+imagesc(He4);
 
-%%  define matrix blocks for M
-for i = 1:numDecompose
-    MSS{i} = M(dsInd{i}, dsInd{i}); % matrix block for subdomain * subdomain
-end
-for i = 1:numDecompose
-    MSE{i} = M(dsInd{i}, deInd); % matrix block for subdomain * edge
-end
-MWW = M(dwInd, dwInd); % matrix block for wirebasket * wirebasket
-MWE = M(dwInd, deInd); % matrix block for wirebasket * edge
-MEE = M(deInd, deInd); % matrix block for edge * edge
 
-%%  compute Schur matrix S and Schur vector b
-%   Schur matrix S
-S = MEE;
-for i = 1:numDecompose
-    S = S - MSE{i}' * (MSS{i} \ MSE{i});
-end
-S = S - MWE' * (MWW \ MWE);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function [] = testfunc(Vertex, Face)
+% function [H, H1, H2, H3, H4, He, He1, He2, He3, He4] = testfunc(Vertex, Face)
+
+addpath(genpath('NewtonParam'));
+
+fC2R = @(x) [real(x) imag(x)];
+fR2C = @(x) complex(x(:,1), x(:,2));
 
 %%
+% [x, t] = readObj('NewtonParam/camelhead_slim');
+x = Vertex;
+t = Face;
+% x = fC2R(X); t = T; x(:,3) = 0;
+
+nf = size(t, 1);
+nv = size(x, 1);
+
+faceElens = sqrt( meshFaceEdgeLen2s(x, t) );
+faceAngles = meshAnglesFromFaceEdgeLen2(faceElens.^2);
+flatXPerFace = [zeros(nf,1) faceElens(:,3) faceElens(:,2).*exp(1i*faceAngles(:,1))];
+
+
+%% initilization
+L = laplacian(x, t, 'uniform');
+B = findBoundary(x, t);
+I = setdiff(1:nv, B);
+Areas = signedAreas(x, t);
+
+isometric_energyies = [ "SymmDirichlet", "ExpSD", "AMIPS", "SARAP", "HOOK", "ARAP", "BARAP", "BCONF"];
+hessian_projections = [ "NP", "KP", "FP4", "FP6", "CM" ];
+
+energy_param = 1;
+energy_type = isometric_energyies(6);
+hession_proj = hessian_projections(3);
+
+findStringC = @(s, names) find(strcmpi(s, names), 1) - 1;
+mexoption = struct('energy_type', findStringC(energy_type, isometric_energyies), ...
+                   'hessian_projection', findStringC(hession_proj, hessian_projections), ...
+                   'energy_param', energy_param, 'verbose', 0);
+
+z = zeros(nv,1);
+z(B) = exp(2i*pi*(1:numel(B))'/numel(B));
+z(I) = -L(I,I)\(L(I,B)*z(B));
+
+figure; h = trimesh(t, real(z), imag(z), z*0); hold on; view(2); axis equal; axis off;
+set(h, 'FaceColor', 'w', 'edgealpha', 0.1, 'edgecolor', 'k');
+
+D2 = -1i/4*(flatXPerFace(:,[2 3 1])-flatXPerFace(:,[3 1 2]))./Areas;
+D = sparse(repmat(1:nf,3,1)', t, D2);
+D2t = D2.';
+
+fDeformEnergy = @(z) meshIsometricEnergyC(conj(D*conj(z)), D*z, D2t, Areas, mexoption); 
+
+en = fDeformEnergy(z);
+
+lambda = 1e-8;
+%% initialization, get sparse matrix pattern
+[xmesh, ymesh] = meshgrid(1:6, 1:6);
+t2 = [t t+nv]';
+Mi = t2(xmesh(:), :);
+Mj = t2(ymesh(:), :);
+
+% H = sparse(Mi, Mj, 1, nv*2, nv*2);  % only pattern is needed
+H = [L L; L L];
+% H0 = (H ~= 0);
+% H1 = H0(1:nv, 1:nv);
+% H2 = H0(1:nv, nv + 1:2 * nv);
+% H3 = H0(nv + 1:2 * nv, 1:nv);
+% H4 = H0(nv + 1:2 * nv, nv + 1:2 * nv);
+
+
+% nonzero indices of the matrix
+Hnonzeros0 = zeros(nnz(H),1);
+idxDiagH = ij2nzIdxs(H, uint64(1:nv*2), uint64(1:nv*2));
+Hnonzeros0(idxDiagH) = lambda*2;
+nzidx = ij2nzIdxs(H, uint64(Mi), uint64(Mj));
+
+
+%% main loop
+g2GIdx = uint64(t2);
+for it=1:10
+    tt = tic;
+
+    fz = conj(D*conj(z)); % equivalent but faster than conj(D)*z;
+    gz = D*z;
+    [e, g, hs] = meshIsometricEnergyC(fz, gz, D2t, Areas, mexoption);
+
+    G = accumarray(g2GIdx(:), g(:));
+    Hnonzeros = accumarray( nzidx(:), hs(:) ) + Hnonzeros0;
+    
+    %% Newton
+%     H = sparse(Mi, Mj, hs, nv*2, nv*2) + 2*lambda*sparse(1:nv*2, 1:nv*2, 1, nv*2, nv*2); 
+    
+% He = replaceNonzeros(H, Hnonzeros);
+% He = (He ~= 0);
+% He1 = He(1:nv, 1:nv);
+% He2 = He(1:nv, nv + 1:2 * nv);
+% He3 = He(nv + 1:2 * nv, 1:nv);
+% He4 = He(nv + 1:2 * nv, nv + 1:2 * nv);
+
+    dz = replaceNonzeros(H, Hnonzeros) \ -G;
+
+    dz = fR2C( reshape(dz, [], 2) );
+    
+    %% orientation preservation
+    ls_t = min( maxtForPositiveArea( fz, gz, conj(D*conj(dz)), D*dz )*0.9, 1 );
+
+    %% line search energy decreasing
+    fMyFun = @(t) fDeformEnergy( dz*t + z );
+    normdz = norm(dz);
+
+    dgdotfz = dot( G, [real(dz); imag(dz)] );
+    
+    ls_alpha = 0.2; ls_beta = 0.5;
+    fQPEstim = @(t) en+ls_alpha*t*dgdotfz;
+
+    e_new = fMyFun(ls_t);
+    while ls_t*normdz>1e-12 && e_new > fQPEstim(ls_t)
+        ls_t = ls_t*ls_beta;
+        e_new = fMyFun(ls_t);
+    end
+    en = e_new;
+    
+    fprintf('it: %3d, en: %.3e, runtime: %fs, ls: %.2e\n', it, en, toc(tt), ls_t);
+    
+    %% update
+    z = dz*ls_t + z;
+%     [ min(signedAreas(z,t)) fDeformEnergy(z) ]
+
+    %%
+    title( sprintf('iter %d', it) );
+    set(h, 'Vertices', fC2R(z));
+    drawnow;
+    pause(0.002);
 end
+

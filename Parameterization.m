@@ -5,15 +5,15 @@ clear;
 clc;
 
 
-%   profile on;
+profile on;
+% delete(gcp('nocreate'));
+% p = parpool;
 PathSet();
 fprintf('Mesh Parameterization Test.\n\n\n');
 
 
 %%  set parameters
-[meshType, solverType, nV, numDecompose, fileName, epsArap, epsSchur] = SetParameter();
-% meshType = 2;solverType = 2;nV = 289;numDecompose = 4;fileName = 'None';eps = floor(1.5 * log10(1.0 / nV));
-% epsArap = 10^eps;epsSchur = 10^eps;
+[meshType, nV, numDecompose, fileName, epsArap, epsSchur] = SetParameter();
 
 
 %%  mesh generation
@@ -26,9 +26,9 @@ fprintf('Part I: Mesh generation\n\n');
 
 
 %%	mesh decomposition
-fprintf('Part II: Mesh decomposition\n\n\n');
-[DS, DE, DW, DWB] = Decomp(MC, Vertex, nV, numDecompose);
-% [DS, DE, DW, DWB, Map, sepEdge, edge, subdomain, w] = Decomp1(MC, Vertex, nV, numDecompose);
+fprintf('Part II: Mesh decomposition\n\n');
+[DS, DE, DW] = Decomp(MC, Vertex, nV, numDecompose);
+% [DS, DE, DW, numDecompose] = Decomp1(nV);
 
 
 %%	parameterization pretreatment
@@ -45,22 +45,14 @@ fprintf('Part III: Pretreatment for the parameterization\n\n\n');
 %	compute the coefficient matrix M for the ARAP system MX = C
 M = ArapSystemM(MCotTheta, nV);
 
-%   set the constraint
-fixedP = [];    % fixed points
-vecWOfixedP = setdiff(1:nV, fixedP)';
-MWOF = M(vecWOfixedP, vecWOfixedP); % the coefficient matrix without the fixed points
-
 %   compute the Schur matrix blocks
-[MSS, MSE, MWW, MWE, MEE, dsInd, dwInd, deInd] = SchurSystemM(M, DS, DE, DW, numDecompose, fixedP);
+[MSS, MSE, MWW, MWE, MEE, dsInd, dwInd, deInd] = SchurSystemM(M, DS, DE, DW, numDecompose);
 
 %   compute the Larangian multiplier for the singular system
-[LW, LE] = LagMultip(FXV, FYV, DW, DWB, dwInd, deInd, Face, nV, nF);
+[LW, LE] = LagMultip(FXV, FYV, DW, DE, dwInd, deInd, Face, nV, nF);
 
 %   compute the wirebasket matrix block for the preconditioner
-if solverType == 3
-    MEE_W = MWirebasket(FCotTheta, Face, DW, DWB, deInd, nV, nF);
-end
-
+MEE_W = MWirebasket(FCotTheta, Face, DW, DE, deInd, nV, nF);
 
 
 %%	Parameterization process
@@ -72,79 +64,27 @@ fprintf('Part IV: Parameterization using the local-global method\n\n');
 %   compute the ARAP energy E(U, L) for the global phase (the first iteration step)
 EnUL = EnergyUL(FCotTheta, FLVX, FLVY, FXU, FYU);
 EnULOld = EnUL;
-EnULNew = 0;
 
 %   the iteration
-iterARAP = 0; % iteration count
+%   direct solver
+[VertexU_D, t_D, iterARAP_D] = IterDirect(MThetaLVX, MThetaLVY, M, Face, FXV, FYV, FCotTheta, EnULOld, nV, nF, epsArap);
+%   conjugate gradient solver
+[VertexU_C, t_C, iterARAP_C, iterSchur_C] = IterConj(MThetaLVX, MThetaLVY, MSS, MSE, MWW, MWE, MEE, ...
+                                                     dsInd, dwInd, deInd, Face, FXV, FYV, FCotTheta, EnULOld, ...
+                                                     nV, nF, numDecompose, epsArap, epsSchur);
+%   preconditioned conjugate gradient solver
+[VertexU_CP, t_CP, iterARAP_CP, iterSchur_CP] = IterConjPre(MThetaLVX, MThetaLVY, MSS, MSE, MWW, MWE, MEE, MEE_W, ...
+                                                            LW, LE, dsInd, dwInd, deInd, Face, FXV, FYV, FCotTheta, ...
+                                                            EnULOld, nV, nF, numDecompose, epsArap, epsSchur);
 
-while 1
-	iterARAP = iterARAP + 1;
-	CX = ArapSystemC(MThetaLVX);
-	CY = ArapSystemC(MThetaLVY);
-    
-    switch solverType
-        case 1  % direct solver
-            CXWOF = CX(vecWOfixedP) - M(vecWOfixedP, fixedP) * VertexU(fixedP, 1);
-            CYWOF = CY(vecWOfixedP) - M(vecWOfixedP, fixedP) * VertexU(fixedP, 2);
-            [XUWOF, t_X{iterARAP}] = DirectSolver(MWOF, CXWOF);
-            [YUWOF, t_Y{iterARAP}] = DirectSolver(MWOF, CYWOF);
-            XU(vecWOfixedP) = XUWOF;
-            YU(vecWOfixedP) = YUWOF;
-        case 2  % conjugate gradient solver
-            CX(vecWOfixedP) = CX(vecWOfixedP) - M(vecWOfixedP, fixedP) * VertexU(fixedP, 1);
-            CY(vecWOfixedP) = CY(vecWOfixedP) - M(vecWOfixedP, fixedP) * VertexU(fixedP, 2);
-            [CSX, CWX, bX] = SchurSystemC(MSS, MSE, MWW, MWE, CX, dsInd, dwInd, deInd, numDecompose);
-            [CSY, CWY, bY] = SchurSystemC(MSS, MSE, MWW, MWE, CY, dsInd, dwInd, deInd, numDecompose);
-            [XUWOF, iter_X{iterARAP}, t_X{iterARAP}] ...
-            = SchurConjSolver(MSS, MSE, MWW, MWE, MEE, CSX, CWX, bX, dsInd, dwInd, deInd, nV - 1, numDecompose, epsSchur);
-            [YUWOF, iter_Y{iterARAP}, t_Y{iterARAP}]...
-            = SchurConjSolver(MSS, MSE, MWW, MWE, MEE, CSY, CWY, bY, dsInd, dwInd, deInd, nV - 1, numDecompose, epsSchur);
-            XU(vecWOfixedP) = XUWOF(vecWOfixedP);
-            YU(vecWOfixedP) = YUWOF(vecWOfixedP);
-        case 3  % preconditioned conjugate gradient solver
-            CX(vecWOfixedP) = CX(vecWOfixedP) - M(vecWOfixedP, fixedP) * VertexU(fixedP, 1);
-            CY(vecWOfixedP) = CY(vecWOfixedP) - M(vecWOfixedP, fixedP) * VertexU(fixedP, 2);
-            [CSX, CWX, bX] = SchurSystemC(MSS, MSE, MWW, MWE, CX, dsInd, dwInd, deInd, numDecompose);
-            [CSY, CWY, bY] = SchurSystemC(MSS, MSE, MWW, MWE, CY, dsInd, dwInd, deInd, numDecompose);
-%             [XUWOF, iter_X{iterARAP}, t_X{iterARAP}] ...
-%             = SchurConjPreSolver(MSS, MSE, MWW, MWE, MEE, MEE, LW, LE, CSX, CWX, bX, dsInd, dwInd, deInd, nV - 1, numDecompose, epsSchur);
-%             [YUWOF, iter_Y{iterARAP}, t_Y{iterARAP}]...
-%             = SchurConjPreSolver(MSS, MSE, MWW, MWE, MEE, MEE, LW, LE, CSY, CWY, bY, dsInd, dwInd, deInd, nV - 1, numDecompose, epsSchur);
-            [XUWOF, iter_X{iterARAP}, t_X{iterARAP}] ...
-            = SchurConjPreSolver(MSS, MSE, MWW, MWE, MEE, MEE_W, LW, LE, CSX, CWX, bX, dsInd, dwInd, deInd, nV - 1, numDecompose, epsSchur);
-            [YUWOF, iter_Y{iterARAP}, t_Y{iterARAP}]...
-            = SchurConjPreSolver(MSS, MSE, MWW, MWE, MEE, MEE_W, LW, LE, CSY, CWY, bY, dsInd, dwInd, deInd, nV - 1, numDecompose, epsSchur);
-            XU(vecWOfixedP) = XUWOF(vecWOfixedP);
-            YU(vecWOfixedP) = YUWOF(vecWOfixedP);
-        otherwise
-            quit(1)
-    end
-    
-	VertexU = [XU, YU];
-	[FXU, FYU] = FaceCoord(VertexU, Face);
-	[FLVX, FLVY, MThetaLVX, MThetaLVY] = ArapL(FXV, FYV, FXU, FYU, FCotTheta, Face, nV, nF);    % compute the rotation L for
-                                                                                                % current iteration
- 	EnULNew = EnergyUL(FCotTheta, FLVX, FLVY, FXU, FYU);    % compute the ARAP energy for current iteration
-    
- 	if abs(EnULNew - EnULOld) / nF >= epsArap
-        EnULOld = EnULNew;
-    else
-        break;
-	end
+
+%%  display the result
+ShowResult(iterARAP_D, t_D, iterARAP_C, iterSchur_C, t_C, iterARAP_CP, iterSchur_CP, t_CP)
+for i = 2:4
+    PlotMesh(VertexU_D, Face, i);
 end
 
-%   display the result
-if solverType == 2 || solverType == 3
-    iterSchur = 0;
-    for i = 1:iterARAP
-        iterSchur = iterSchur + iter_X{i} + iter_Y{i};
-    end
-    iterSchur = floor(iterSchur / (iterARAP * 2));
-    fprintf('local-global iteration steps: %d \n', iterARAP);
-    fprintf('PCG iteration steps (in each global phase): %d \n', iterSchur);
-end
-VertexU = full(VertexU);
-DrawMesh(VertexU, Face, nV);
 
-
-% profile viewer;
+%%
+% delete(gcp('nocreate'));
+profile viewer;

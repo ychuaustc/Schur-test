@@ -1,27 +1,130 @@
-%%  
-function [] = testfunc(Vertex, Face, DS, DE, DW, DWB, nV, nF, numDecompose)
-%%
-M1 = findM(Vertex, Face);
-[MSS, MSE, MWW, MWE, MEE, dsInd, dwInd, deInd] = SchurSystemM(M1, DS, DE, DW, numDecompose);
-%%
-FNotInWWB = zeros(nF, 1);
-Face1 = Face(:, 1);
-Face2 = Face(:, 2);
-Face3 = Face(:, 3);
-dwwbInd = find(DW | DWB)';
-notindwwbInd = setdiff(1:nV, dwwbInd);
-for i = notindwwbInd
-    fnotinwwb1 = find(Face1 == i)';
-    FNotInWWB(fnotinwwb1) = 1;
-    fnotinwwb2 = find(Face2 == i)';
-    FNotInWWB(fnotinwwb2) = 1;
-    fnotinwwb3 = find(Face3 == i)';
-    FNotInWWB(fnotinwwb3) = 1;
-end
-fnotinwInd = find(FNotInWWB)';
-finwInd = setdiff(1:nF, fnotinwInd);
-Vertex1 = Vertex(dwwbInd, :);
-Face1 = Face(finwInd, :);
-MEE_W = findM(Vertex, Face1);
+function [H, H1, H2, H3, H4, He, He1, He2, He3, He4] = testfunc(Vertex, Face)
 
+addpath(genpath('NewtonParam'));
+
+fC2R = @(x) [real(x) imag(x)];
+fR2C = @(x) complex(x(:,1), x(:,2));
+
+%%
+% [x, t] = readObj('camelhead_slim');
+x = Vertex;
+t = Face;
+% x = fC2R(X); t = T; x(:,3) = 0;
+
+nf = size(t, 1);
+nv = size(x, 1);
+
+faceElens = sqrt( meshFaceEdgeLen2s(x, t) );
+faceAngles = meshAnglesFromFaceEdgeLen2(faceElens.^2);
+flatXPerFace = [zeros(nf,1) faceElens(:,3) faceElens(:,2).*exp(1i*faceAngles(:,1))];
+
+
+%% initilization
+L = laplacian(x, t, 'uniform');
+B = findBoundary(x, t);
+I = setdiff(1:nv, B);
+Areas = signedAreas(x, t);
+
+isometric_energyies = [ "SymmDirichlet", "ExpSD", "AMIPS", "SARAP", "HOOK", "ARAP", "BARAP", "BCONF"];
+hessian_projections = [ "NP", "KP", "FP4", "FP6", "CM" ];
+
+energy_param = 1;
+energy_type = isometric_energyies(1);
+hession_proj = hessian_projections(2);
+
+findStringC = @(s, names) find(strcmpi(s, names), 1) - 1;
+mexoption = struct('energy_type', findStringC(energy_type, isometric_energyies), ...
+                   'hessian_projection', findStringC(hession_proj, hessian_projections), ...
+                   'energy_param', energy_param, 'verbose', 0);
+
+z = zeros(nv,1);
+z(B) = exp(2i*pi*(1:numel(B))'/numel(B));
+z(I) = -L(I,I)\(L(I,B)*z(B));
+
+figure; h = trimesh(t, real(z), imag(z), z*0); hold on; view(2); axis equal; axis off;
+set(h, 'FaceColor', 'w', 'edgealpha', 0.1, 'edgecolor', 'k');
+
+D2 = -1i/4*(flatXPerFace(:,[2 3 1])-flatXPerFace(:,[3 1 2]))./Areas;
+D = sparse(repmat(1:nf,3,1)', t, D2);
+D2t = D2.';
+
+fDeformEnergy = @(z) meshIsometricEnergyC(conj(D*conj(z)), D*z, D2t, Areas, mexoption); 
+
+en = fDeformEnergy(z);
+
+lambda = 1e-8;
+%% initialization, get sparse matrix pattern
+[xmesh, ymesh] = meshgrid(1:6, 1:6);
+t2 = [t t+nv]';
+Mi = t2(xmesh(:), :);
+Mj = t2(ymesh(:), :);
+
+% H = sparse(Mi, Mj, 1, nv*2, nv*2);  % only pattern is needed
+H = [L L; L L];
+H1 = H(1:nv, 1:nv);
+H2 = H(1:nv, nv + 1:2 * nv);
+H3 = H(nv + 1:2 * nv, 1:nv);
+H4 = H(nv + 1:2 * nv, nv + 1:2 * nv);
+
+% nonzero indices of the matrix
+Hnonzeros0 = zeros(nnz(H),1);
+idxDiagH = ij2nzIdxs(H, uint64(1:nv*2), uint64(1:nv*2));
+Hnonzeros0(idxDiagH) = lambda*2;
+nzidx = ij2nzIdxs(H, uint64(Mi), uint64(Mj));
+
+
+%% main loop
+g2GIdx = uint64(t2);
+for it=1:10
+    tt = tic;
+
+    fz = conj(D*conj(z)); % equivalent but faster than conj(D)*z;
+    gz = D*z;
+    [e, g, hs] = meshIsometricEnergyC(fz, gz, D2t, Areas, mexoption);
+
+    G = accumarray(g2GIdx(:), g(:));
+    Hnonzeros = accumarray( nzidx(:), hs(:) ) + Hnonzeros0;
+    
+    %% Newton
+%     H = sparse(Mi, Mj, hs, nv*2, nv*2) + 2*lambda*sparse(1:nv*2, 1:nv*2, 1, nv*2, nv*2);  
+    He = replaceNonzeros(H, Hnonzeros);
+    He1 = He(1:nv, 1:nv);
+    He2 = He(1:nv, nv + 1:2 * nv);
+    He3 = He(nv + 1:2 * nv, 1:nv);
+    He4 = He(nv + 1:2 * nv, nv + 1:2 * nv);
+    dz = replaceNonzeros(H, Hnonzeros) \ -G;
+
+    dz = fR2C( reshape(dz, [], 2) );
+    
+    %% orientation preservation
+    ls_t = min( maxtForPositiveArea( fz, gz, conj(D*conj(dz)), D*dz )*0.9, 1 );
+
+    %% line search energy decreasing
+    fMyFun = @(t) fDeformEnergy( dz*t + z );
+    normdz = norm(dz);
+
+    dgdotfz = dot( G, [real(dz); imag(dz)] );
+    
+    ls_alpha = 0.2; ls_beta = 0.5;
+    fQPEstim = @(t) en+ls_alpha*t*dgdotfz;
+
+    e_new = fMyFun(ls_t);
+    while ls_t*normdz>1e-12 && e_new > fQPEstim(ls_t)
+        ls_t = ls_t*ls_beta;
+        e_new = fMyFun(ls_t);
+    end
+    en = e_new;
+    
+    fprintf('it: %3d, en: %.3e, runtime: %fs, ls: %.2e\n', it, en, toc(tt), ls_t);
+    
+    %% update
+    z = dz*ls_t + z;
+%     [ min(signedAreas(z,t)) fDeformEnergy(z) ]
+
+    %%
+    title( sprintf('iter %d', it) );
+    set(h, 'Vertices', fC2R(z));
+    drawnow;
+    pause(0.002);
 end
+

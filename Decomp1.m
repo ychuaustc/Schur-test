@@ -1,51 +1,18 @@
-function [DS, DE, DW, DWB, Map, sepEdge, edges, subdomain, w] = Decomp1(MC, Vertex, nV, numDecompose)
-%
-%   this function decompose the mesh into #numDecompose pieces, each piece is obtained in
-%   an iterative process
-%
-%   INPUT:  MC - adjacent matrix
-%           Vertex - mesh vertices
-%           numDecompose - decomposition number
-%
-%   OUTPUT: DV - decomposition list
-%           DS - subdomain list
-%           DB - subdomain boundary list
-%           DE - edge of all decomposition
-%           DW - wirebasket set
-%           DWB - wirebasket boundary
+function [DS, DE, DW, numDecompose] = Decomp1(nV)
 
+numDecompose = 1;
 
-%   decompose the mesh using dice
-Vertex = Vertex(:, 1:2);
-level = log2(numDecompose);
-[Map, sepEdge] = dice('geopart', level, MC, Vertex, 30);
+nv = sqrt(nV);
 
-%   plot the decomposed mesh
-gplotmap(MC, Vertex, Map);
-
-%   find the subdomains and edge / wirebasket
-%   subdomains
-parts = unique(Map);
-edges = unique(sepEdge);
-for itp = parts
-    part = find(Map == itp)';
-    dv = zeros(nV, 1);
-    dv(part) = 1;
-    DS{itp + 1} = dv;
-    DS{itp + 1}(edges) = 0;
-end
-%   edge / wirebasket
-subdomain = setdiff(1:nV, edges)';
-w = setdiff(1:nV, find(sum(MC(:, subdomain), 2)));
+DS{1} = ones(nV, 1);
 DW = zeros(nV, 1);
-DW(w) = 1;
 DE = zeros(nV, 1);
-DE(edges) = 1;
-DE(w) = 0;
-DWB = DE;
-for itp = parts
-    DS{itp + 1}(w) = 0;
-end
 
+DW(1:nv:(nv - 1) * nv + 1) = 1;
+DE(2:nv:(nv - 1) * nv  +2) = 1;
+dw = find(DW)';
+de = find(DE)';
+DS{1}(dw) = 0;
+DS{1}(de) = 0;
 
 end
