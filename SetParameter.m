@@ -1,11 +1,10 @@
-function [meshType, solverType, nV, numDecompose, fileName, epsArap, epsSchur] = SetParameter()
+function [meshType, nV, nv, numDecompose, fileName, epsArap, epsSchur, NewtonOp] = SetParameter()
 %
 %   this function sets up global parameters, such as mesh size, decomposition number and so on
 %
 %   INPUT:  
 %
 %   OUTPUT: meshType - the type of the triangulation and the manner to obtain it
-%           solverType - the type of the solver
 %           nV - mesh size
 %           numDecompose - decomposition number
 %           fileName - name of obj file
@@ -24,18 +23,36 @@ switch meshType
     case {1, 2}
         m1 = listdlg('PromptString', 'Mesh size', 'SelectionMode','single', ...
                      'liststring', {'289', '1089', '4225', '16641', '66049', '263169'}) + 3;
+%         m1 = listdlg('PromptString', 'Mesh size', 'SelectionMode','single', ...
+%                      'liststring', {'289', '1089', '4225', '16641', '66049', '263169'}) + 4;
         nV = (2^m1 + 1)^2;
         fileName = 'None';
     case 3
         fileName = listdlg('PromptString', 'Mesh file', ...
                            'SelectionMode','single', ...
-                           'liststring', {'ball', 'camelhead_slim', 'face'});
+                           'liststring', {'ball', 'bunny', 'camelhead', 'camelhead2', 'camelhead3' 'bot', 'boz', 'blade', 'am', 'air', 'face'});
         switch fileName
             case 1
                 [V, ~, ~, ~] = readObj('NewtonParam/ball');
             case 2
-                [V, ~, ~, ~] = readObj('NewtonParam/camelhead_slim');
+                [V, ~, ~, ~] = readObj('NewtonParam/bunny');
             case 3
+                [V, ~, ~, ~] = readObj('NewtonParam/camel');
+            case 4
+                [V, ~, ~, ~] = readObj('NewtonParam/camelhead45k');
+            case 5
+                [V, ~, ~, ~] = readObj('NewtonParam/camelhead181k');
+            case 6
+                [V, ~, ~, ~] = readObj('NewtonParam/botijo_parametrized_nonlin_cut');
+            case 7
+                [V, ~, ~, ~] = readObj('NewtonParam/bozbezbozzel100K_parametrized_nonlin_cut');
+            case 8
+                [V, ~, ~, ~] = readObj('NewtonParam/blade_parametrized_nonlin_cut');
+            case 9
+                [V, ~, ~, ~] = readObj('NewtonParam/amphora_parametrized_nonlin_cut');
+            case 10
+                [V, ~, ~, ~] = readObj('NewtonParam/aircraft_cut');
+            case 11
                 [V, ~, ~, ~] = readObj('NewtonParam/face');
             otherwise
                 quit(1);
@@ -46,28 +63,63 @@ switch meshType
 end
 
 
-if nV <= 200
+if nV <= 100
     fprintf('No need to apply decomposition method./n');
     quit(1);
-elseif nV <= 1000
-	m2 = listdlg('PromptString', 'Decomposition number', 'SelectionMode','single', 'liststring', {'4'});
+elseif nV <= 2000
+	m2 = listdlg('PromptString','Decomposition number','SelectionMode','single','liststring', {'4'});
 elseif nV <= 4000
-    m2 = listdlg('PromptString', 'Decomposition number', 'SelectionMode','single', 'liststring', {'4', '16'});
+    m2 = listdlg('PromptString','Decomposition number','SelectionMode','single','liststring', {'4','8'});
+elseif nV <= 8000
+    m2 = listdlg('PromptString','Decomposition number','SelectionMode','single','liststring', {'4','8','16'});
 elseif nV <= 16000
-    m2 = listdlg('PromptString', 'Decomposition number', 'SelectionMode','single', 'liststring', {'4', '16', '64'});
+    m2 = listdlg('PromptString','Decomposition number','SelectionMode','single','liststring', {'4','8','16','32'});
+elseif nV <= 32000
+    m2 = listdlg('PromptString','Decomposition number','SelectionMode','single','liststring', {'4','8','16','32','64'});
+elseif nV <= 64000
+    m2 = listdlg('PromptString','Decomposition number','SelectionMode','single','liststring', {'4','8','16','32','64','128'});
+elseif nV <= 128000
+    m2 = listdlg('PromptString','Decomposition number','SelectionMode','single','liststring', {'4','8','16','32','64','128','256'});
+elseif nV <= 256000
+    m2 = listdlg('PromptString','Decomposition number','SelectionMode','single','liststring', {'4','8','16','32','64','128','256','512'});
 else
-    m2 = listdlg('PromptString', 'Decomposition number', 'SelectionMode','single', 'liststring', {'4', '16', '64', '256'});
+    m2 = listdlg('PromptString','Decomposition number','SelectionMode','single','liststring', {'4','8','16','32','64','128','256','512','1024'});
 end
-numDecompose = 2^(2 * m2);
+numDecompose = 2^(m2 + 1);
 
 
-solverType = listdlg('PromptString', 'Solver type', 'SelectionMode','single', ...
-                     'liststring', {'Direct solver', 'Conjugate solver', 'Preconditioned conjugate solver'});
+switch meshType
+    case {1, 2}
+        nv = (2^(m1 - m2) + 1)^2;
+    case 3
+        nv = floor(nV / numDecompose);
+    otherwise
+        quit(1);
+end
 
 
-eps = floor(1.5 * log10(1.0 / nV));
+NewtonOp = listdlg('PromptString', 'Newton Method', ...
+                   'SelectionMode','single', ...
+                   'liststring', {'In one direction', ...
+                                  'In two directions (x and y)', ...
+                                  'In two directions (x and y) using PCG'});
+
+
+eps = floor(log10(1.0 / nV));
 epsArap = 10^eps;
-epsSchur = 10^eps;
+% epsSchur = 10^eps;
+% epsSchur = 10^(eps / 2);
+% epsSchur = 1e-6;
+% epsSchur = 1e-3;
+% epsSchur = 1e-2;
+epsSchur = 1e-1;
+% epsSchur = 2e-1;
+% epsSchur = 5e-1;
+% epsSchur = 7.5e-1;
+% epsSchur = 9e-1;
+% epsSchur = 9.5e-1;
+% epsSchur = 9.9e-1;
+% epsSchur = 1;
 
 
 end

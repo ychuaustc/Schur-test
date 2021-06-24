@@ -1,4 +1,4 @@
-function [DS, DE, DW] = Decomp(MC, Vertex, nV, numDecompose)
+function [DS, DE, DW, Map, sepEdge] = Decomp(MC, Vertex, nV, numDecompose)
 %
 %   this function decompose the mesh into #numDecompose pieces, each piece is obtained in
 %   an iterative process

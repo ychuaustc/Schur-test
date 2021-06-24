@@ -1,4 +1,4 @@
-function [U, solver] = SchurMultiply(MSS, MSE, MWW, MWE, MEE, V, numDecompose)
+function U = SchurMultiplyWithSolver1(MSE, MWW, MWE, MEE, V, solver, numDecompose)
 %
 %   this function computes the Schur matrix S times the vector V
 %
@@ -24,10 +24,7 @@ function [U, solver] = SchurMultiply(MSS, MSE, MWW, MWE, MEE, V, numDecompose)
 U = MEE * V;
 for i = 1:numDecompose
     b{i} = MSE{i} * V;
-    nonzero_ele{i} = nonzeros(MSS{i});
 end
-solver = batch_splsolver(MSS, 'lu');
-solver.refactorize(nonzero_ele);
 X = solver.solve(b);
 for i = 1:numDecompose
     U = U - MSE{i}' * X{i};

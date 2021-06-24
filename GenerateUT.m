@@ -8,19 +8,13 @@ function [Vertex, Face] = GenerateUT(nV)
 %           Face - mesh faces
 
 
-fprintf('mesh generating...\n');
-
-
 P = gallery('uniformdata',[nV 2],0);
 DT = delaunayTriangulation(P);
 
 
 Vertex = DT.Points;
-Vertex(:, 3) = 0;
+Vertex(:, 3) = Vertex(:, 1).^2 + Vertex(:, 2).^2;
 Face = DT.ConnectivityList;
-
-
-fprintf('mesh generation completed\n\n');
 
 
 end

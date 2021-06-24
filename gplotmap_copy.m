@@ -33,7 +33,7 @@ if nargin < 5
 end
 
 figure;
-subplot(2, 2, 1);
+% subplot(2, 2, 1);
 
 axislim = [min(xy);max(xy)];
 axis(axislim(:)');

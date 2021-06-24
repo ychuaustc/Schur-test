@@ -7,7 +7,7 @@ function [FLVX, FLVY, MThetaLVX, MThetaLVY] = ArapL(FXV, FYV, FXU, FYU, FCotThet
 %           FXU - x-coordinates for the face matrix-U
 %           FYU - y-coordinates for the face matrix-U
 %           FCotTheta - the cotangent value of the face matrix
-%           FCotTheta - the cotangent value of the face matrix
+%           Face - mesh faces
 %           nV - mesh size
 %           nF - number of faces
 %

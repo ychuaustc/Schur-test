@@ -1,4 +1,4 @@
-function U = Preconditioner(MWW, MWE, MEE_W, LW, LE, V, presolver)
+function U = Preconditioner1(MWW, MWE, MEE_W, V)
 %
 %   this function applies the Neumann-Dirichlet preconditioner for the Schur system (M^(-1)V)
 %
@@ -12,24 +12,11 @@ function U = Preconditioner(MWW, MWE, MEE_W, LW, LE, V, presolver)
 %   OUTPUT: U - the preconditioned vector M^(-1)V
 
 
-% nw = size(MWW, 1);
-% nb = size(MEE_W, 1);
-% zw = zeros(nw, 1);
-% U = [MWW MWE LW;MWE' MEE_W LE;LW' LE' 0] \ [zw;V;0];
-% U = U(nw + 1:nw + nb);
-
-% U = (MEE_W - MWE' * (MWW \ MWE)) \ V;
-
 nw = size(MWW, 1);
 nb = size(MEE_W, 1);
 zw = zeros(nw, 1);
-% U = [MWW MWE;MWE' MEE_W] \ [zw;V];
-V0{1} = [zw;V];
-U0 = presolver.solve(V0);
-U = U0{1};
+U = [MWW MWE;MWE' MEE_W] \ [zw;V];
 U = U(nw + 1:nw + nb);
-% U = MEE_W \ [zw;V];
-% U = U(nw + 1:nb);
 
 
 end

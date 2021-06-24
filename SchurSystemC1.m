@@ -1,4 +1,4 @@
-function [CS, CW, b] = SchurSystemC(MSEall, MWW, MWE, C, dsInd, dwInd, deInd, solver, numDecompose)
+function [CS, CW, b] = SchurSystemC1(MSEall, MWW, MWE, C, dsInd, dwInd, deInd, solver, solverw, numDecompose)
 %
 %   this function computes the right hand side of the Schur system
 %
@@ -28,6 +28,9 @@ b = CE;
 X = solver.solve(CS);
 Xall = cell2mat(X');
 b = b - MSEall' * Xall;
+% V0{1} = CW;
+% U0 = solverw.solve(V0);
+% b = b - MWE' * U0{1};
 b = b - MWE' * (MWW \ CW);
 
 

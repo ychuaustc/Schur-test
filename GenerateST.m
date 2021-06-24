@@ -8,9 +8,6 @@ function [Vertex, Face] = GenerateST(nV)
 %           Face - mesh faces
 
 
-fprintf('mesh generating...\n');
-
-
 nX = sqrt(nV);
 nY = sqrt(nV);
 nFhalf = (nX - 1) * (nY - 1);
@@ -38,9 +35,6 @@ for i = 1:1:ny1
 end
 Face(1:2:nF - 1, [1 2 3]) = [L L + nX + 1 L + nX];
 Face(2:2:nF, [1 2 3]) = [L L + 1 L + nX + 1];
-
-
-fprintf('mesh generation completed\n\n');
 
 
 end

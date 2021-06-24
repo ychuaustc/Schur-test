@@ -23,6 +23,7 @@ TR = triangulation(Face,Vertex);
 
 B = freeBoundary(TR);
 B = B(:, 1);
+% B = findBoundary(Vertex, Face);
 nB = size(B, 1);
 
 I = setdiff(1:nV, B)';
@@ -31,7 +32,7 @@ nI = size(I, 1);
 
 MCtemp = sparse(Face, Face(:, [2 3 1]), 1, nV, nV);
 MC = double(MCtemp | MCtemp');
-fprintf('mesh information:\nnumber of vertices: %d \nnumber of faces: %d\n\n\n', nV, nF);
+fprintf('mesh information:\nthe number of vertices: %d \nthe number of faces: %d\n\n\n', nV, nF);
 
 
 end

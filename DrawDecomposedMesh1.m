@@ -7,7 +7,7 @@
 %%          numDecompose:	number of decomposition
 %%  Output: 
 
-function [] = DrawDecomposedMesh(Vertex, Face, DV, nV, numDecompose)
+function [] = DrawDecomposedMesh1(Vertex, Face, DV, nV, numDecompose)
     
 %%
 subplot(2, 2, 1);
@@ -18,6 +18,12 @@ plot([0, 0], [0, 1], 'k');hold on; plot([1, 1], [0, 1], 'k');hold on;
 axis off; axis equal; title('Decomposed mesh');
 
 %%
+hold on;
+
+set(trimesh(Face, Vertex(:, 1), Vertex(:, 2)), 'color', 'k');
+
+hold off;
+
 Z = zeros(nV, 1);
 for i = 1:numDecompose
 % for i = 1:numDecompose + 1

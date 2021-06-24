@@ -1,4 +1,4 @@
-function [DV, DS, DB, DE, DW, DWB, numDS, numDecompose] = Decompose(nV, nv, B, MC, wirebasketType, Vertex, Face, nF)
+function [DS, DE, DV, numDS, numDecompose] = Decompose(nV, nv, MC)
 %
 %   this function decompose the mesh into #numDecompose pieces, each piece is obtained in
 %   an iterative process
@@ -7,7 +7,6 @@ function [DV, DS, DB, DE, DW, DWB, numDS, numDecompose] = Decompose(nV, nv, B, M
 %           nv - expected size of each decomposition
 %           B - boundary
 %           MC - adjacent matrix
-%           wirebasketType - the type of the wirebasket set
 %           Vertex - mesh vertices
 %           Face - mesh faces
 %           nF - number of faces
@@ -25,18 +24,11 @@ function [DV, DS, DB, DE, DW, DWB, numDS, numDecompose] = Decompose(nV, nv, B, M
 %%	initialization
 ML = MC;	% adjacent matrix for the left part after one decomposition step
 verticeL = ones(nV, 1);	% vertice in the left part after one decomposition step
-boundL = zeros(nV, 1);	% boundary for vertisL
-boundL(B) = 1;
 column = 1;	% step count
 
 
-%%  start time recording for decomposition
-fprintf('starting decomposition ...\n');
-tic;
-
-
 %%	decomposition loops
-while sum(boundL) > 0
+while sum(verticeL) > 0
     %	pick up a random vertex on B, add it to vertice
     boundTemp = find(boundL);
     verticeAdd = zeros(nV, 1);
@@ -141,7 +133,7 @@ DecomposeCheck(nV, B, DV, DB, numDecompose, td);
 
 
 %%  construct the wirebasket set
-[DS, DB, DE, DW, DWB] = FindWirebasket(DV, numDecompose, MC, nV, wirebasketType);
+[DS, DB, DE, DW, DWB] = FindWirebasket(DV, numDecompose, MC, nV);
 
 
 %% display the details of the decomposition
@@ -166,7 +158,7 @@ fprintf('the size of the boundary of the wirebasket: %d \n\n\n', numWB);
 
 
 %%  draw the decomposed mesh
-DrawDecomposedMesh(Vertex, Face, DV, nV, nF, numDecompose);
+% DrawDecomposedMesh(Vertex, Face, DV, nV, nF, numDecompose);
 
 
 end

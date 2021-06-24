@@ -6,3 +6,4 @@ addpath(genpath('meshpart-master'))
 meshpart_startup();
 
 addpath(genpath('NewtonParam'));
+addpath(genpath('solver'));

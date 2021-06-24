@@ -1,5 +1,4 @@
-function [X, iterT, t] = SchurConjPreSolver(MSEall, MWW, MWE, MEE, MEE_W, LW, LE, CS, CW, b, ...
-                                            dsInd, dwInd, deInd, MSSsolver, presolver, dssize, nV, numDecompose, epsSchur)
+function [X, iterT, t] = SchurConjPreSolver1(MSS, MSE, MSEall, MWW, MWE, MEE, MEE_W, LW, LE, CS, CW, b, dsInd, dwInd, deInd, MSSsolver, presolver, dssize, nV, numDecompose, epsSchur)
 %
 %   this function solves the Schur system using a preconditioned conjugate method
 %
@@ -34,21 +33,27 @@ tic;
 l = length(b);
 XE = zeros(l, 1);
 SX = SchurMultiplyWithSolver(MSEall, MWW, MWE, MEE, XE, MSSsolver, dssize, numDecompose);
+% SX = SchurMultiplyWithSolver1(MSE, MWW, MWE, MEE, XE, MSSsolver, numDecompose);
 rold = b - SX;
 zold = Preconditioner(MWW, MWE, MEE_W, LW, LE, rold, presolver);
 p = zold;
-rnew = rold;
-iterT = 0;
+w = SchurMultiplyWithSolver(MSEall, MWW, MWE, MEE, p, MSSsolver, dssize, numDecompose);
+% w = SchurMultiplyWithSolver1(MSE, MWW, MWE, MEE, p, MSSsolver, numDecompose);
+alpha = (rold' * zold) / (p' * w);
+XE = XE + alpha * p;
+rnew = rold - alpha * w;
+iterT = 1;
 
 while norm(rnew, 2) > epsSchur
-    w = SchurMultiplyWithSolver(MSEall, MWW, MWE, MEE, p, MSSsolver, dssize, numDecompose);
-    alpha = (rold' * zold) / (p' * w);
-    XE = XE + alpha * p;
-    rnew = rold - alpha * w;
     znew = Preconditioner(MWW, MWE, MEE_W, LW, LE, rnew, presolver);
     beta = (rnew' * znew) / (rold' * zold);
     p = znew + beta * p;
+    w = SchurMultiplyWithSolver(MSEall, MWW, MWE, MEE, p, MSSsolver, dssize, numDecompose);
+%     w = SchurMultiplyWithSolver1(MSE, MWW, MWE, MEE, p, MSSsolver, numDecompose);
+    alpha = (rnew' * znew) / (p' * w);
+    XE = XE + alpha * p;
     rold = rnew;
+    rnew = rnew - alpha * w;
     zold = znew;
     iterT = iterT + 1;
 end

@@ -1,0 +1,32 @@
+U0 = [MWW MWE LW;MWE' MEE_W LE;LW' LE' 0];
+nw = size(MWW, 1);
+nb = size(MEE_W, 1);
+zw = zeros(nw, 1);
+b1 = [zw;rold;0];
+tic;
+c1 = U0 \ b1;
+t1 = toc;
+tic;
+b2 = GaussElimination1(U0, b1);
+t2 = toc;
+
+% U0 = [MWW MWE LW;MWE' MEE_W LE;LW' LE' 0];
+% [L1, U1] = lu(U0);
+% nw = size(MWW, 1);
+% nb = size(MEE_W, 1);
+% zw = zeros(nw, 1);
+% b1 = [zw;rold;0];
+% tic;
+% c1 = U0 \ b1;
+% t1 = toc;
+% tic;
+% b2 = U1 \ b1;
+% c2 = L1 \ b2;
+% t2 = toc;
+
+n2 = 20000;
+x(1:2:2 * n2 - 1, 1) = 0;x(1:2:2 * n2 - 1, 2) = [0:0.1:(n2 - 1) * 0.1]';
+x(2:2:2 * n2, 1) = 0.1;x(2:2:2 * n2, 2) = [0:0.1:(n2 - 1) * 0.1]';
+x(:, 3) = 0;
+t(1:2:2 * n2 - 3, 1) = [1:2:2 * n2 - 3]';t(1:2:2 * n2 - 3, 2) = [2:2:2 * n2 - 2]';t(1:2:2 * n2 - 3, 3) = [4:2:2 * n2]';
+t(2:2:2 * n2 - 2, 1) = [1:2:2 * n2 - 3]';t(2:2:2 * n2 - 2, 2) = [4:2:2 * n2]';t(2:2:2 * n2 - 2, 3) = [3:2:2 * n2 - 1]';

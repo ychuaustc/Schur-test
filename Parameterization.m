@@ -6,14 +6,12 @@ clc;
 
 
 profile on;
-% delete(gcp('nocreate'));
-% p = parpool;
 PathSet();
 fprintf('Mesh Parameterization Test.\n\n\n');
 
 
 %%  set parameters
-[meshType, nV, numDecompose, fileName, epsArap, epsSchur] = SetParameter();
+[meshType, nV, nv, numDecompose, fileName, epsArap, epsSchur] = SetParameter();
 
 
 %%  mesh generation
@@ -27,8 +25,7 @@ fprintf('Part I: Mesh generation\n\n');
 
 %%	mesh decomposition
 fprintf('Part II: Mesh decomposition\n\n');
-[DS, DE, DW] = Decomp(MC, Vertex, nV, numDecompose);
-% [DS, DE, DW, numDecompose] = Decomp1(nV);
+[DS, DE, DW, Map, sepEdge] = Decomp(MC, Vertex, nV, numDecompose);
 
 
 %%	parameterization pretreatment
@@ -46,13 +43,19 @@ fprintf('Part III: Pretreatment for the parameterization\n\n\n');
 M = ArapSystemM(MCotTheta, nV);
 
 %   compute the Schur matrix blocks
-[MSS, MSE, MWW, MWE, MEE, dsInd, dwInd, deInd] = SchurSystemM(M, DS, DE, DW, numDecompose);
+[dsInd, dwInd, deInd, dsIndall, dweInd, ide, dssize] = SchurSystemIndex(DS, DE, DW, numDecompose);
+[MSS, MSE, MSEall, MWW, MWE, MEE] = SchurSystemM(M, dsInd, dwInd, deInd, dsIndall, numDecompose);
+
+%   compute the faces of wirebasket/edge
+[FinWE, finweInd] = FindFinWE(Face, dweInd, nV);
 
 %   compute the Larangian multiplier for the singular system
-[LW, LE] = LagMultip(FXV, FYV, DW, DE, dwInd, deInd, Face, nV, nF);
+[LW, LE] = LagMultip(FXV, FYV, dwInd, deInd, finweInd, Face, nV);
 
 %   compute the wirebasket matrix block for the preconditioner
-MEE_W = MWirebasket(FCotTheta, Face, DW, DE, deInd, nV, nF);
+% tic;
+MEE_W = MWirebasket(FCotTheta, Face, deInd, finweInd, nV, nF);
+% tm = toc;
 
 
 %%	Parameterization process
@@ -69,22 +72,26 @@ EnULOld = EnUL;
 %   direct solver
 [VertexU_D, t_D, iterARAP_D] = IterDirect(MThetaLVX, MThetaLVY, M, Face, FXV, FYV, FCotTheta, EnULOld, nV, nF, epsArap);
 %   conjugate gradient solver
-[VertexU_C, t_C, iterARAP_C, iterSchur_C] = IterConj(MThetaLVX, MThetaLVY, MSS, MSE, MWW, MWE, MEE, ...
-                                                     dsInd, dwInd, deInd, Face, FXV, FYV, FCotTheta, EnULOld, ...
-                                                     nV, nF, numDecompose, epsArap, epsSchur);
+% [VertexU_C, t_C, iterARAP_C, iterSchur_C] = IterConj(MThetaLVX, MThetaLVY, MSS, MSE, MWW, MWE, MEE, ...
+%                                                      dsInd, dwInd, deInd, Face, FXV, FYV, FCotTheta, EnULOld, ...
+%                                                      nV, nF, numDecompose, epsArap, epsSchur);
 %   preconditioned conjugate gradient solver
-[VertexU_CP, t_CP, iterARAP_CP, iterSchur_CP] = IterConjPre(MThetaLVX, MThetaLVY, MSS, MSE, MWW, MWE, MEE, MEE_W, ...
-                                                            LW, LE, dsInd, dwInd, deInd, Face, FXV, FYV, FCotTheta, ...
+[VertexU_CP, t_CP, iterARAP_CP, iterSchur_CP] = IterConjPre(MThetaLVX, MThetaLVY, MSS, MSEall, MWW, MWE, MEE, MEE_W, ...
+                                                            LW, LE, dsInd, dwInd, deInd, dssize, Face, FXV, FYV, FCotTheta, ...
                                                             EnULOld, nV, nF, numDecompose, epsArap, epsSchur);
 
 
 %%  display the result
-ShowResult(iterARAP_D, t_D, iterARAP_C, iterSchur_C, t_C, iterARAP_CP, iterSchur_CP, t_CP)
-for i = 2:4
-    PlotMesh(VertexU_D, Face, i);
-end
+% ShowResult(iterARAP_D, t_D, iterARAP_C, iterSchur_C, t_C, iterARAP_CP, iterSchur_CP, t_CP)
+ShowResult1(iterARAP_D, t_D, iterARAP_CP, iterSchur_CP, t_CP)
+% PlotMesh(VertexU_D, Face, 2);
+% PlotMesh(VertexU_C, Face, 3);
+% PlotMesh(VertexU_CP, Face, 3);
+% error1 = RMSError(VertexU_D, VertexU_C);
+error2 = RMSError(VertexU_D, VertexU_CP);
+% fprintf('The RMS error between the solution from direct solver and the solution from the CG solver is %f\n\n', error1);
+fprintf('The RMS error between the solution from direct solver and the solution from the PCG solver is %f\n\n', error2);
 
 
 %%
-% delete(gcp('nocreate'));
 profile viewer;
